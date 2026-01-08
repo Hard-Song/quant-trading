@@ -13,7 +13,7 @@
 
 ### 1. 环境安装
 
-\`\`\`bash
+```bash
 # 使用uv安装依赖（推荐）
 uv sync
 
@@ -42,8 +42,8 @@ uv run python scripts/run_backtest.py --help
 - 可视化图表（价格、均线、交易信号）
 
 ## 项目结构
+```
 
-\`\`\`
 quant/
 ├── config/                  # 配置文件
 │   └── settings.yaml        # 全局配置
@@ -67,7 +67,7 @@ quant/
 
 ### 1. 数据获取
 
-\`\`\`python
+```python
 from data.data_feed import AStockDataFeed
 
 # 创建数据源
@@ -80,11 +80,11 @@ df = data_feed.get_stock_data(
     end_date="2024-12-31",
     adjust="qfq"         # 前复权
 )
-\`\`\`
+```
 
 ### 2. 策略开发
 
-\`\`\`python
+```python
 from strategies.base_strategy import BaseStrategy
 import backtrader as bt
 
@@ -104,11 +104,11 @@ class MyStrategy(BaseStrategy):
             self.buy()
         elif self.data.close[0] < self.sma[0]:
             self.sell()
-\`\`\`
+```
 
 ### 3. 回测运行
 
-\`\`\`python
+```python
 from core.backtest_engine import BacktestEngine
 from strategies.ma_strategy import DualMovingAverage
 
@@ -122,7 +122,7 @@ engine.add_strategy(DualMovingAverage, fast_period=5, slow_period=20)
 # 运行回测
 result = engine.run()
 print(result)
-\`\`\`
+```
 
 ## 示例策略
 
@@ -133,22 +133,22 @@ print(result)
 - 快线下穿慢线（死叉）→ 卖出
 
 **运行**：
-\`\`\`bash
+```bash
 uv run python scripts/run_backtest.py --fast 5 --slow 20
-\`\`\`
+```
 
 **参数调优**：
-\`\`\`bash
+```bash
 # 尝试不同的均线组合
 uv run python scripts/run_backtest.py --fast 10 --slow 30
 uv run python scripts/run_backtest.py --fast 20 --slow 60
-\`\`\`
+```
 
 ## 配置说明
 
 编辑 \`config/settings.yaml\` 文件可以修改系统配置：
 
-\`\`\`yaml
+```yaml
 # 回测配置
 backtest:
   initial_cash: 100000    # 初始资金
@@ -164,11 +164,11 @@ a_stocks:
 logging:
   level: "INFO"          # 日志级别
   file: "./logs/quant_trading.log"
-\`\`\`
+```
 
 ## 常用命令
 
-\`\`\`bash
+```bash
 # 查看数据获取示例
 uv run python data/data_feed.py
 
@@ -177,7 +177,7 @@ uv run python strategies/base_strategy.py
 
 # 运行回测
 uv run python scripts/run_backtest.py --help
-\`\`\`
+```
 
 ## 常见问题
 
