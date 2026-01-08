@@ -19,11 +19,11 @@ uv sync
 
 # 或者使用pip
 pip install -r requirements.txt
-\`\`\`
+```
 
 ### 2. 运行第一个回测
 
-\`\`\`bash
+```bash
 # 方式1：使用默认参数运行
 uv run python scripts/run_backtest.py
 
@@ -32,7 +32,7 @@ uv run python scripts/run_backtest.py --symbol 600000 --fast 10 --slow 30
 
 # 方式3：查看帮助信息
 uv run python scripts/run_backtest.py --help
-\`\`\`
+```
 
 ### 3. 查看结果
 
@@ -43,7 +43,6 @@ uv run python scripts/run_backtest.py --help
 
 ## 项目结构
 ```
-
 quant/
 ├── config/                  # 配置文件
 │   └── settings.yaml        # 全局配置
@@ -61,7 +60,7 @@ quant/
 │   └── logger.py           # 日志系统
 └── scripts/                 # 运行脚本
     └── run_backtest.py     # 回测运行脚本
-\`\`\`
+```
 
 ## 核心概念
 
