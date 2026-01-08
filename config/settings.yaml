@@ -1,0 +1,103 @@
+# ===============================
+# 量化交易系统配置文件
+# ===============================
+
+# 数据源配置
+data:
+  # 数据源提供商: akshare 或 tushare
+  provider: "akshare"
+
+  # 数据存储路径
+  storage_path: "./data/storage"
+
+  # 数据更新频率（秒）
+  update_interval: 3600
+
+  # A股股票列表缓存时间（小时）
+  stock_list_cache: 24
+
+# 回测配置
+backtest:
+  # 初始资金
+  initial_cash: 100000
+
+  # 手续费率（万分之几）
+  commission: 0.0003
+
+  # 滑点（百分比）
+  slippage: 0.0001
+
+  # 是否允许卖空
+  allow_short: false
+
+  # 默认时间范围
+  default_start_date: "2025-01-01"
+  default_end_date: "2025-12-31"
+
+# A股交易规则
+a_stocks:
+  # T+1交易规则（当天买入次日才能卖出）
+  t_plus_one: true
+
+  # 涨跌停限制
+  limit_up: 0.10   # 主板、中小板 10%
+  limit_down: 0.10
+
+  # 科创板、创业板涨跌停
+  star_market_limit_up: 0.20
+  star_market_limit_down: 0.20
+
+  # 最小交易单位（手）
+  min_unit: 100
+
+  # 交易时间
+  trading_hours:
+    morning: ["09:30", "11:30"]
+    afternoon: ["13:00", "15:00"]
+
+# 日志配置
+logging:
+  # 日志级别: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+  # 日志文件路径
+  file: "./logs/quant_trading.log"
+
+  # 控制台输出
+  console: true
+
+  # 日志轮转（MB）
+  rotation: 10
+
+# 策略配置
+strategies:
+  # 双均线策略默认参数
+  dual_ma:
+    fast_period: 5    # 快线周期
+    slow_period: 20   # 慢线周期
+
+  # RSI策略默认参数
+  rsi:
+    period: 14
+    overbought: 70    # 超买线
+    oversold: 30      # 超卖线
+
+# AI决策配置（预留）
+ai:
+  # 是否启用AI决策
+  enabled: false
+
+  # AI模型提供商: openai, qwen, deepseek
+  provider: "openai"
+
+  # API密钥（从环境变量读取）
+  api_key_env: "OPENAI_API_KEY"
+
+  # 模型名称
+  model: "gpt-4"
+
+  # 最大Token数
+  max_tokens: 1000
+
+  # 温度参数
+  temperature: 0.7

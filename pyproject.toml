@@ -1,0 +1,16 @@
+[project]
+name = "quant-trading"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "akshare>=1.18.8",
+    "backtrader>=1.9.78.123",
+    "ipykernel>=7.1.0",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "pyyaml>=6.0.3",
+]
