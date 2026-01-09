@@ -1,65 +1,131 @@
-# 量化交易系统 - 快速入门指南
+# Quant Trading Framework
 
-一个适合零基础入门的Python量化交易系统，支持策略回测、模拟交易和实盘交易（预留）。
+一个完整的**量化交易回测框架**，支持策略开发、选股、批量回测和策略对比。
 
-## 系统特点
+## ✨ 核心特性
 
-- **简单易用**：详细注释，清晰架构，适合初学者
-- **A股支持**：内置A股交易规则（T+1、涨跌停限制等）
-- **灵活扩展**：模块化设计，方便添加自定义策略
-- **完整功能**：数据获取、策略回测、绩效分析、可视化
+### 1. 策略开发
+- 🔌 **插件式架构**：轻松添加自定义策略
+- 📊 **丰富的指标**：内置MA、MACD、RSI等常用指标
+- 🎯 **灵活的参数**：支持动态配置策略参数
+- 📈 **可视化**：自动生成回测图表
 
-## 快速开始
+### 2. 选股系统
+- 🎯 **多因子选股**：PE、PB、市值等基本面因子
+- 📊 **技术指标选股**：RSI、MACD、均线等技术指标
+- 🧩 **组合选股**：支持AND/OR逻辑组合多个选股器
+- 🔧 **自定义扩展**：插件式架构，轻松添加自定义选股器
 
-### 1. 环境安装
+### 3. 批量回测
+- ⚡ **并行处理**：支持多线程并行回测，提高效率
+- 📊 **汇总报告**：自动生成详细的回测汇总表
+- 🏆 **排名分析**：按收益率、夏普比率等指标排名
+- 💾 **结果保存**：自动保存回测结果到CSV文件
+
+### 4. 策略对比
+- 🔬 **多策略对比**：在同一股票上对比多个策略
+- 📊 **详细指标**：收益率、夏普比率、最大回撤、胜率等
+- 📈 **可视化对比**：生成对比图表
+- 🏆 **最佳策略**：自动识别表现最好的策略
+
+### 5. 数据管理
+- 💾 **智能缓存**：自动缓存数据，避免重复API调用
+- 🔄 **数据复用**：多个策略共享同一份数据
+- 📂 **持久化存储**：支持pickle格式持久化缓存
+
+## 🚀 快速开始
+
+### 环境安装
 
 ```bash
-# 使用uv安装依赖（推荐）
-uv sync
-
-# 或者使用pip
-pip install -r requirements.txt
+# 使用uv安装依赖
+uv pip install -r requirements.txt
 ```
 
-### 2. 运行第一个回测
+### 1. 单策略回测
 
 ```bash
-# 方式1：使用默认参数运行
+# 使用默认参数回测
 uv run python scripts/run_backtest.py
 
-# 方式2：自定义参数
-uv run python scripts/run_backtest.py --symbol 600000 --fast 10 --slow 30
+# 指定股票和策略
+uv run python scripts/run_backtest.py --symbol 000001 --strategy macd
 
-# 方式3：查看帮助信息
-uv run python scripts/run_backtest.py --help
+# 自定义策略参数
+uv run python scripts/run_backtest.py --fast 10 --slow 30
 ```
 
-### 3. 查看结果
+### 2. 策略对比
 
-回测完成后，你会看到：
-- 控制台输出详细的交易日志
-- 回测结果汇总（收益率、夏普比率、最大回撤等）
-- 可视化图表（价格、均线、交易信号）
+```bash
+# 对比MA和MACD策略
+uv run python scripts/compare_strategies.py --strategies ma macd
 
-## 项目结构
+# 对比多个参数组合
+uv run python scripts/compare_strategies.py --strategies ma_params --params "5,20 10,30 20,60"
+```
+
+### 3. 选股
+
+```bash
+# 列出所有可用选股器
+uv run python scripts/run_screener.py --list
+
+# 因子选股：低PE
+uv run python scripts/run_screener.py --screener low_pe --max-pe 15
+
+# 技术选股：RSI超卖
+uv run python scripts/run_screener.py --screener oversold --rsi-threshold 30
+
+# 组合选股：低PE + RSI超卖
+uv run python scripts/run_screener.py --composite low_pe oversold --logic AND
+```
+
+### 4. 批量回测
+
+```bash
+# 对指定股票批量回测
+uv run python scripts/run_batch_backtest.py --symbols 000001 600000
+
+# 先选股，再批量回测
+uv run python scripts/run_batch_backtest.py --screener low_pe --max-pe 30 --stock-limit 50
+```
+
+## 📁 项目结构
+
 ```
 quant/
-├── config/                  # 配置文件
-│   └── settings.yaml        # 全局配置
-├── data/                    # 数据层
-│   ├── data_feed.py        # 数据获取（AKShare）
-│   └── storage/            # 数据缓存目录
-├── strategies/              # 策略层
-│   ├── base_strategy.py    # 策略基类
-│   ├── ma_strategy.py      # 双均线策略
-│   └── custom/             # 自定义策略目录
-├── core/                    # 核心层
-│   └── backtest_engine.py  # 回测引擎
-├── utils/                   # 工具层
-│   ├── config.py           # 配置管理
-│   └── logger.py           # 日志系统
-└── scripts/                 # 运行脚本
-    └── run_backtest.py     # 回测运行脚本
+├── core/                        # 核心模块
+│   ├── backtest_engine.py       # 回测引擎
+│   ├── data_manager.py          # 数据管理器（缓存）
+│   ├── strategy_comparator.py   # 策略对比器
+│   └── batch_backtest_engine.py # 批量回测引擎
+│
+├── strategies/                  # 策略模块
+│   ├── base_strategy.py         # 策略基类
+│   ├── ma_strategy.py           # 双均线策略
+│   └── macd_strategy.py         # MACD策略
+│
+├── screeners/                   # 选股器模块
+│   ├── base_screener.py         # 选股器基类
+│   ├── screener_manager.py      # 选股器管理器
+│   ├── factor_screener.py       # 因子选股器
+│   ├── technical_screener.py    # 技术指标选股器
+│   ├── composite_screener.py    # 组合选股器
+│   └── custom/                  # 自定义选股器
+│
+├── data/                        # 数据模块
+│   └── data_feed.py             # 数据源（AKShare）
+│
+├── scripts/                     # 脚本工具
+│   ├── run_backtest.py          # 单策略回测
+│   ├── compare_strategies.py    # 策略对比
+│   ├── run_screener.py          # 选股
+│   └── run_batch_backtest.py    # 批量回测
+│
+└── docs/                        # 文档
+    ├── MULTI_STRATEGY_COMPARISON.md
+    └── SCREENER_GUIDE.md
 ```
 
 ## 核心概念
@@ -203,6 +269,22 @@ uv run python scripts/run_backtest.py --help
 **A**:
 - Windows用户：确保安装了matplotlib依赖
 - 使用 \`--no-plot\` 参数跳过图表
+
+### Q5: 选股测试速度很慢？
+**A**: 这是正常现象，原因和解决方案：
+- **原因**: 因子选股器需要获取每只股票的实时基本面数据，每只股票约需1-2秒
+- **当前状态**: 50只股票需要1-2分钟
+- **优化建议**:
+  - 减少 \`--stock-limit\` 参数值（测试时使用10-20只）
+  - 使用更具体的选股条件（缩小筛选范围）
+  - 避免频繁运行选股，可缓存结果重复使用
+- **批量回测**: 先用小规模测试（10-20只），确认效果后再扩大规模
+
+### Q6: Windows终端显示乱码？
+**A**: 编码问题导致特殊字符显示异常：
+- 不影响功能使用，仅影响日志显示
+- 解决方案：设置终端编码为UTF-8（如果支持）
+- 或使用 \`--no-save\` 参数减少日志输出
 
 ## 下一步
 
