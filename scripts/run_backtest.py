@@ -23,15 +23,25 @@ sys.path.insert(0, str(project_root))
 
 from data.data_feed import AStockDataFeed
 from strategies.ma_strategy import DualMovingAverage
+from strategies.macd_strategy import MACDStrategy, MACDWithTrend, MACDWithRSI
 from core.backtest_engine import BacktestEngine
 from utils.logger import logger
 from utils.config import config
+
+# 策略映射字典
+STRATEGIES = {
+    'ma': DualMovingAverage,
+    'macd': MACDStrategy,
+    'macd_trend': MACDWithTrend,
+    'macd_rsi': MACDWithRSI,
+}
 
 
 def run_backtest(
     symbol: str = "000001",
     start_date: str = "2024-01-01",
     end_date: str = "2024-12-31",
+    strategy_name: str = "ma",
     fast_period: int = 5,
     slow_period: int = 20,
     initial_cash: float = 100000,
@@ -100,19 +110,33 @@ def run_backtest(
 
     # ==================== 步骤3: 添加数据和策略 ====================
     logger.info("\n【步骤3】配置策略参数")
-    logger.info(f"策略: 双均线策略")
-    logger.info(f"快线周期: {fast_period} 天")
-    logger.info(f"慢线周期: {slow_period} 天")
+    logger.info(f"策略: {strategy_name}")
+
+    # 获取策略类
+    strategy_class = STRATEGIES.get(strategy_name, DualMovingAverage)
+
+    # 根据不同策略设置参数
+    if strategy_name == 'ma':
+        logger.info(f"快线周期: {fast_period} 天")
+        logger.info(f"慢线周期: {slow_period} 天")
+        strategy_params = {
+            'fast_period': fast_period,
+            'slow_period': slow_period,
+        }
+    elif strategy_name.startswith('macd'):
+        logger.info(f"MACD快线: {fast_period}, 慢线: {slow_period}")
+        strategy_params = {
+            'fast_period': fast_period,
+            'slow_period': slow_period,
+        }
+    else:
+        strategy_params = {}
 
     # 添加数据
     engine.add_data(df)
 
     # 添加策略
-    engine.add_strategy(
-        DualMovingAverage,
-        fast_period=fast_period,
-        slow_period=slow_period,
-    )
+    engine.add_strategy(strategy_class, **strategy_params)
 
     # ==================== 步骤4: 运行回测 ====================
     logger.info("\n【步骤4】运行回测")
@@ -149,15 +173,22 @@ def parse_args():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='量化交易回测系统 - 双均线策略',
+        description='量化交易回测系统 - 多策略支持',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  %(prog)s                          # 使用默认参数
+  %(prog)s                          # 使用默认参数（双均线）
+  %(prog)s --strategy macd          # 使用MACD策略
   %(prog)s --symbol 600000          # 回测浦发银行
   %(prog)s --fast 10 --slow 30      # 使用10日和30日均线
   %(prog)s --start 2022-01-01       # 指定开始日期
   %(prog)s --cash 50000             # 设置初始资金5万
+
+可用策略:
+  ma         双均线策略（默认）
+  macd       MACD策略
+  macd_trend MACD+趋势过滤
+  macd_rsi   MACD+RSI组合
         """
     )
 
@@ -166,6 +197,14 @@ def parse_args():
         type=str,
         default='000001',
         help='股票代码（默认: 000001）'
+    )
+
+    parser.add_argument(
+        '--strategy',
+        type=str,
+        default='ma',
+        choices=['ma', 'macd', 'macd_trend', 'macd_rsi'],
+        help='策略类型（默认: ma）'
     )
 
     parser.add_argument(
@@ -229,6 +268,7 @@ if __name__ == "__main__":
         symbol=args.symbol,
         start_date=args.start,
         end_date=args.end,
+        strategy_name=args.strategy,
         fast_period=args.fast,
         slow_period=args.slow,
         initial_cash=args.cash,
