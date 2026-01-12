@@ -57,7 +57,7 @@ class AStockDataFeed:
         symbol: str,
         start_date: str,
         end_date: str,
-        adjust: str = ""
+        adjust: str = "qfq"
     ) -> pd.DataFrame:
         """
         获取股票历史行情数据
@@ -67,9 +67,9 @@ class AStockDataFeed:
             start_date: 开始日期，格式 "YYYY-MM-DD"
             end_date: 结束日期，格式 "YYYY-MM-DD"
             adjust: 复权类型
-                - "": 不复权（默认）
-                - "qfq": 前复权
+                - "qfq": 前复权（默认，推荐用于回测）
                 - "hfq": 后复权
+                - "": 不复权
 
         返回:
             DataFrame包含以下列：

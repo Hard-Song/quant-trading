@@ -44,6 +44,7 @@ class BaseStrategy(bt.Strategy):
     # 策略参数（可以在运行时动态修改）
     params = (
         ('log_level', 'info'),  # 日志级别
+        ('t_plus_one', True),   # 是否启用T+1交易限制（默认启用）
     )
 
     def __init__(self):
@@ -60,7 +61,12 @@ class BaseStrategy(bt.Strategy):
         self.buy_price = None  # 买入价格
         self.buy_comm = None  # 买入手续费
 
+        # T+1交易限制：记录买入日期
+        # {持仓索引: 买入日期}
+        self.buy_dates = {}
+
         logger.info(f"策略初始化: {self.__class__.__name__}")
+        logger.info(f"T+1限制: {'启用' if self.p.t_plus_one else '禁用'}")
 
     def start(self):
         """
@@ -135,6 +141,14 @@ class BaseStrategy(bt.Strategy):
                 )
                 self.buy_price = order.executed.price
                 self.buy_comm = order.executed.comm
+
+                # T+1限制：记录买入日期
+                if self.p.t_plus_one:
+                    buy_date = self.data.datetime.date(0)
+                    # 使用数据索引作为key
+                    # 注意：这里简化处理，实际可能需要更复杂的逻辑
+                    self.buy_dates['last_buy'] = buy_date
+                    self.log(f"T+1记录: 买入日期 {buy_date}")
             else:
                 # 卖出订单
                 self.log(
@@ -151,6 +165,10 @@ class BaseStrategy(bt.Strategy):
                     self.log(
                         f"交易收益: {profit:.2f} ({profit_percent:.2f}%)"
                     )
+
+                # T+1限制：清除买入日期记录
+                if self.p.t_plus_one and 'last_buy' in self.buy_dates:
+                    del self.buy_dates['last_buy']
 
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             # 订单失败
@@ -222,3 +240,33 @@ class BaseStrategy(bt.Strategy):
             bool: 是否应该卖出
         """
         return False
+
+    def can_sell(self) -> bool:
+        """
+        检查是否可以卖出（T+1限制）
+
+        返回:
+            bool: True=可以卖出，False=不能卖出（T+1限制）
+
+        说明：
+            A股T+1交易规则：当天买入的股票，当天不能卖出，只能在下一个交易日及以后卖出
+        """
+        if not self.p.t_plus_one:
+            # 未启用T+1限制
+            return True
+
+        if 'last_buy' not in self.buy_dates:
+            # 没有买入记录，可以卖出
+            return True
+
+        # 获取当前日期和买入日期
+        current_date = self.data.datetime.date(0)
+        buy_date = self.buy_dates['last_buy']
+
+        # 检查是否是买入当天
+        if current_date == buy_date:
+            self.log(f"T+1限制: 今天({current_date})买入，今天不能卖出")
+            return False
+
+        # 可以卖出
+        return True

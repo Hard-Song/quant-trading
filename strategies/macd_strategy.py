@@ -96,7 +96,9 @@ class MACDStrategy(BaseStrategy):
             return
 
         # 如果数据不足（MACD需要足够的历史数据），等待
-        if len(self.data) < self.p.slow_period + self.p.signal_period:
+        # MACD计算需要：max(fast_period, slow_period) + signal_period
+        required_bars = max(self.p.fast_period, self.p.slow_period) + self.p.signal_period
+        if len(self.data) < required_bars:
             return
 
         # === 买入逻辑 ===
@@ -116,6 +118,10 @@ class MACDStrategy(BaseStrategy):
         # === 卖出逻辑 ===
         else:  # 当前有持仓
             if self.crossover[0] < 0:  # 死叉：DIF下穿DEA
+                # T+1检查：确认今天不是买入当天
+                if not self.can_sell():
+                    return
+
                 self.log(
                     f"MACD死叉 | "
                     f"收盘价: {self.data.close[0]:.2f} | "
@@ -195,6 +201,10 @@ class MACDWithTrend(BaseStrategy):
         else:
             # 死叉 或 跌破趋势线
             if self.crossover[0] < 0 or self.data.close[0] < self.ema_trend[0]:
+                # T+1检查
+                if not self.can_sell():
+                    return
+
                 self.log(
                     f"卖出信号 | "
                     f"收盘价: {self.data.close[0]:.2f} | "
@@ -275,6 +285,10 @@ class MACDWithRSI(BaseStrategy):
         else:
             # MACD死叉 或 RSI超买
             if self.crossover[0] < 0 or self.rsi[0] > self.p.rsi_overbought:
+                # T+1检查
+                if not self.can_sell():
+                    return
+
                 self.log(
                     f"卖出信号 | "
                     f"RSI: {self.rsi[0]:.1f} | "

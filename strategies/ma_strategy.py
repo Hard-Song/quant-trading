@@ -124,6 +124,10 @@ class DualMovingAverage(BaseStrategy):
         # === 卖出逻辑 ===
         else:  # 当前有持仓
             if self.crossover[0] < 0:  # 死叉：快线从上向下穿过慢线
+                # T+1检查：确认今天不是买入当天
+                if not self.can_sell():
+                    return
+
                 self.log(
                     f"死叉出现 | "
                     f"收盘价: {self.data.close[0]:.2f} | "

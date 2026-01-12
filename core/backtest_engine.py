@@ -12,6 +12,7 @@ from typing import Type, Dict, Any, Optional
 from dataclasses import dataclass
 from utils.logger import logger
 from utils.config import config
+from core.commission_scheme import get_a_stock_commission
 
 
 @dataclass
@@ -88,6 +89,10 @@ class BacktestEngine:
         initial_cash: float = 100000,
         commission: float = 0.0003,
         slippage: float = 0.0001,
+        use_a_stock_comm: bool = True,
+        stamp_duty: float = 0.001,
+        transfer_fee: float = 0.00002,
+        market: str = 'sh',
     ):
         """
         初始化回测引擎
@@ -96,9 +101,15 @@ class BacktestEngine:
             initial_cash: 初始资金（默认10万）
             commission: 手续费率（默认万分之3）
             slippage: 滑点（默认万分之一）
+            use_a_stock_comm: 是否使用A股真实手续费结构（默认True）
+            stamp_duty: 印花税率（默认千分之一，仅卖出收取）
+            transfer_fee: 过户费率（默认十万分之二，双向收取）
+            market: 市场类型（'sh'=沪市，'sz'=深市）
 
         说明：
-            - A股手续费通常在万分之2.5到万分之5之间
+            - 当use_a_stock_comm=True时，使用A股真实手续费结构
+              包括佣金（双向，最低5元）+ 印花税（卖出0.1%）+ 过户费（双向）
+            - 当use_a_stock_comm=False时，使用简单的比例手续费
             - 滑点是指实际成交价与预期价格的差异
         """
         # 创建Cerebro引擎
@@ -108,16 +119,37 @@ class BacktestEngine:
         self.cerebro.broker.setcash(initial_cash)
 
         # 设置手续费
-        # commission=0.0003 表示万分之3的手续费
-        self.cerebro.broker.setcommission(commission=commission)
+        if use_a_stock_comm:
+            # 使用A股真实手续费结构
+            self.cerebro.broker.addcommissioninfo(
+                get_a_stock_commission(
+                    commission=commission,
+                    stamp_duty=stamp_duty,
+                    transfer_fee=transfer_fee,
+                    market=market,
+                )
+            )
+            logger.info(f"使用A股真实手续费结构")
+            logger.info(f"  佣金: {commission*10000:.1f}‰（双向，最低5元）")
+            logger.info(f"  印花税: {stamp_duty*100:.2f}%（仅卖出）")
+            logger.info(f"  过户费: {transfer_fee*100000:.1f}‱（双向）")
+        else:
+            # 使用简单的比例手续费
+            self.cerebro.broker.setcommission(commission=commission)
+            logger.info(f"使用简单手续费: {commission*10000:.1f}‰")
+
+        # 设置滑点
+        # 滑点是指实际成交价与预期价格的差异
+        self.cerebro.broker.set_slippage_perc(slippage)
 
         # 记录参数
         self.initial_cash = initial_cash
         self.commission = commission
         self.slippage = slippage
+        self.use_a_stock_comm = use_a_stock_comm
 
         logger.info(f"回测引擎初始化完成")
-        logger.info(f"初始资金: {initial_cash:.2f}, 手续费: {commission:.4f}")
+        logger.info(f"初始资金: {initial_cash:.2f}, 滑点: {slippage*10000:.1f}‰")
 
     def add_data(
         self,
@@ -371,8 +403,7 @@ if __name__ == "__main__":
     df = data_feed.get_stock_data(
         symbol="000001",
         start_date="2023-01-01",
-        end_date="2024-12-31",
-        adjust=""
+        end_date="2024-12-31"
     )
 
     if df.empty:
